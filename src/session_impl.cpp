@@ -5440,7 +5440,12 @@ retry:
 	{
 #ifndef TORRENT_DISABLE_DHT
 		if (m_settings.get_bool(settings_pack::enable_dht))
+		{
 			start_dht();
+			// if we have bootstrap nodes configured, make sure we initiate host
+			// name lookups
+			update_dht_bootstrap_nodes();
+		}
 		else
 			stop_dht();
 #endif
@@ -5449,6 +5454,11 @@ retry:
 	void session_impl::update_dht_bootstrap_nodes()
 	{
 #ifndef TORRENT_DISABLE_DHT
+		// if we don't have a DHT object yet, there's no point in initiating
+		// these lookups. We will call this function again once we create the DHT
+		// object
+		if (!m_dht) return;
+
 		std::string const& node_list = m_settings.get_str(settings_pack::dht_bootstrap_nodes);
 		std::vector<std::pair<std::string, int> > nodes;
 		parse_comma_separated_string_port(node_list, nodes);
